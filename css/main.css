@@ -4,8 +4,8 @@ body {
     font: 14px/24px sans-serif;
 }
 
-#container {
-    width: 600px;
+#app {
+    width: 900px;
     margin: 0 auto;
     padding: 20px;
 }
@@ -15,10 +15,11 @@ body {
   list-style: none outside none;
   margin: 0;
   padding: 0;
+  display: inline;
 }
 
 .nav > li {
-  float: left;
+  display: inline;
 }
 
 .nav li a.disabled {
@@ -83,4 +84,21 @@ body {
 
 #page {
   height: 50px;
+}
+
+.remote {
+  display: inline;
+}
+
+.remote span,
+.remote a {
+  padding: 7px;
+}
+
+.remote.prev {
+  margin-right: 4px;
+}
+
+.remote span.page.disabled {
+  color: #bbb;
 }

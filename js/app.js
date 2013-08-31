@@ -1,5 +1,13 @@
 $(function() {
-    var Page, Pages, PageView, PaginationView, NavPageView;
+    var Page,
+        Pages,
+        PageView,
+        PaginationView,
+        NavPageView,
+        AppView,
+        RemoteView,
+        NextView,
+        PrevView;
 
     Page = Backbone.Model.extend({
         defaults: {
@@ -38,29 +46,31 @@ $(function() {
         },
 
         selectNext: function() {
-            this.select(this.at(this.nextToSelect()));
+            if( !this.lastSelected() ) {
+                this.select(this.nextPage());
+            }
+        },
+
+        nextPage: function() {
+            return this.at(this.selectedIndex() + 1);
         },
 
         selectPrev: function () {
-            this.select(this.at(this.prevToSelect()));
-        },
-
-        nextToSelect: function () {
-            var index = this.selectedIndex() + 1;
-            if(index >= this.length) {
-                return this.selectedIndex();
-            } else {
-                return index;
+            if( !this.firstSelected() ){
+                this.select(this.prevPage());
             }
         },
 
-        prevToSelect: function () {
-            var index = this.selectedIndex() - 1;
-            if(index < 0) {
-                return this.selectedIndex();
-            } else {
-                return index;
-            }
+        prevPage: function() {
+            return this.at(this.selectedIndex() - 1);
+        },
+
+        lastSelected: function() {
+            return this.selectedPage() === this.last();
+        },
+
+        firstSelected: function() {
+            return this.selectedPage() === this.first();
         },
 
         selectedIndex: function () {
@@ -71,40 +81,70 @@ $(function() {
 
     var Pages = new PagesList(window.feed_data);
 
-    PrevView = Backbone.View.extend({
+
+    RemoteView = Backbone.View.extend({
+
+        disabled_template: _.template('<span class="page disabled"><%= name %></span>'),
+
+        template: _.template('<a href="#" class="page"><%= name %></a>'),
 
         initialize: function () {
-            this.listenTo(this.collection, "page:selected", this.toggleActive);
+            this.listenTo(this.collection, "page:selected", this.render);
         },
 
+        renderControl: function (name, cmp) {
+            var template
+            if(cmp){
+                template = this.disabled_template;
+            } else {
+                template = this.template;
+            }
+
+
+            this.$el.html(template({"name": name}));
+            return this;
+        }
+    });
+
+    PrevView = RemoteView.extend({
+        className: 'remote prev',
+
         events: {
-            "click": "prev"
+            "click a": "prev"
         },
 
         prev: function () {
             this.collection.selectPrev();
         },
+
+        render: function () {
+            this.renderControl("≺ Previous", this.collection.firstSelected());
+            return this;
+        }
+
     });
 
-    NextView = Backbone.View.extend({
-        initialize: function () {
-            this.listenTo(this.collection, "page:selected", this.toggleActive);
-        },
+    NextView = RemoteView.extend({
+        className: 'remote next',
 
         events: {
-            "click": "next"
+            "click a": "next"
         },
 
         next: function () {
             this.collection.selectNext();
         },
 
+        render: function () {
+            this.renderControl("Next ≻", this.collection.lastSelected());
+            return this;
+        }
     });
 
     PageView = Backbone.View.extend({
         template: _.template('<p><%= headline %></p>'),
 
-        el: $('#page'),
+        id: 'page',
 
         initialize: function() {
             this.listenTo(this.collection, 'page:selected', this.render);
@@ -123,7 +163,6 @@ $(function() {
         className: 'nav',
 
         initialize: function () {
-            this.addAll()
             this.collection.select(this.collection.first());
         },
 
@@ -133,7 +172,7 @@ $(function() {
         },
 
         addAll: function(){
-            Pages.each(this.addOne, this);
+            this.collection.each(this.addOne, this);
         },
 
         addOne: function(page){
@@ -173,10 +212,27 @@ $(function() {
         }
 
     });
-    window.PageView = PageView;
-    window.Pages = Pages;
-    window.Page = Page;
-    window.pageView = new PageView({collection: Pages});
-    window.prevView = new PrevView({collection: Pages, el: $('.prev a')});
-    window.nextView = new NextView({collection: Pages, el: $('.next a')});
+
+    AppView = Backbone.View.extend({
+        initialize: function() {
+            this.render()
+        },
+
+        render: function() {
+            var pageView, paginationView, prevView, nextView;
+
+            pageView = new PageView({collection: this.collection});
+            paginationView = new PaginationView({collection: this.collection});
+            prevView = new PrevView({collection: this.collection});
+            nextView = new NextView({collection: this.collection});
+
+            this.$el.append(prevView.render().el);
+            this.$el.append(paginationView.render().el);
+            this.$el.append(nextView.render().el);
+            this.$el.prepend(pageView.render().el);
+            return this;
+        }
+    });
+
+    window.appView = new AppView({collection: Pages, el: $('#app')});
 });
