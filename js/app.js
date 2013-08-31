@@ -2,6 +2,7 @@ $(function() {
     var Page,
         Pages,
         PageView,
+        PageNumberView,
         PaginationView,
         NavPageView,
         AppView,
@@ -157,7 +158,8 @@ $(function() {
 
     });
 
-    PaginationView = Backbone.View.extend({
+    PageNumberView = Backbone.View.extend({
+
         tagName: 'ul',
 
         className: 'nav',
@@ -213,22 +215,33 @@ $(function() {
 
     });
 
+    PaginationView = Backbone.View.extend({
+        render: function() {
+            var pageNumberView, prevView, nextView;
+
+            pageNumberView = new PageNumberView({collection: this.collection});
+            prevView = new PrevView({collection: this.collection});
+            nextView = new NextView({collection: this.collection});
+
+            this.$el.append(pageNumberView.render().el);
+            this.$el.append(nextView.render().el);
+            this.$el.prepend(prevView.render().el);
+            return this;
+        }
+    });
+
     AppView = Backbone.View.extend({
         initialize: function() {
             this.render()
         },
 
         render: function() {
-            var pageView, paginationView, prevView, nextView;
+            var pageView, paginationView;
 
-            pageView = new PageView({collection: this.collection});
             paginationView = new PaginationView({collection: this.collection});
-            prevView = new PrevView({collection: this.collection});
-            nextView = new NextView({collection: this.collection});
+            pageView = new PageView({collection: this.collection});
 
-            this.$el.append(prevView.render().el);
             this.$el.append(paginationView.render().el);
-            this.$el.append(nextView.render().el);
             this.$el.prepend(pageView.render().el);
             return this;
         }
