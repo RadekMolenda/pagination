@@ -8,7 +8,8 @@ $(function() {
         AppView,
         RemoteView,
         NextView,
-        PrevView;
+        PrevView,
+        Filter;
 
     Page = Backbone.Model.extend({
         defaults: {
@@ -76,12 +77,35 @@ $(function() {
 
         selectedIndex: function () {
             return this.indexOf(this.selectedPage());
+        },
+
+        filtered: function() {
+            return this.filter(Filter, this);
         }
 
     });
 
-    var Pages = new PagesList(window.feed_data);
+    Filter = function(page) {
+        var index = this.indexOf(page),
+            selected = this.selectedIndex(),
+            distanceSelected = Math.abs(selected - index),
+            lastTwo = this.length - 2;
+        if(selected <= 5){
+            return (index <= 7) ||
+               (index >= lastTwo) ||
+               (distanceSelected <= 2);
+        } else if (selected >= this.length - 5) {
+            return (index >= this.length - 8) ||
+               (index < 2) ||
+               (distanceSelected <= 2);
+        } else {
+            return (index < 2) ||
+                   (index >= lastTwo) ||
+                   (distanceSelected <= 2);
+        }
+    };
 
+    var Pages = new PagesList(window.feed_data);
 
     RemoteView = Backbone.View.extend({
 
@@ -100,7 +124,6 @@ $(function() {
             } else {
                 template = this.template;
             }
-
 
             this.$el.html(template({"name": name}));
             return this;
@@ -166,23 +189,57 @@ $(function() {
 
         initialize: function () {
             this.collection.select(this.collection.first());
+            this.listenTo(this.collection, 'page:selected', this.renderFiltered);
         },
 
         render: function() {
-            this.addAll();
+            this.renderFiltered();
             return this;
         },
 
-        addAll: function(){
-            this.collection.each(this.addOne, this);
+        renderFiltered: function () {
+            var filtered = _.map(this.collection.filtered(), this.buildView, this);
+            this.$el.html(filtered);
         },
 
-        addOne: function(page){
-            var view = new NavPageView({model: page, collection: Pages});
-            this.$el.append(view.render().el);
+        buildView: function(page) {
+            var view = new NavPageView({model: page, collection: this.collection});
+            return view.render().el;
+        },
+
+        mapFiltered: function (coll) {
+            var pair = _.first(coll, 2),
+                first = pair[0],
+                next = pair[1],
+                navPageView,
+                elipsisView;
+            if(_.isEmpty(coll)) {
+                return [];
+            } else {
+                navPageView = new NavPageView({model: page, collection: this.collection});
+                if(next !== undefined && (next - first !== 1)) {
+                    elipsisView = new ElipsisView({});
+                    return mapFiltered(_.rest(coll)).concat([navPageView.render().el, elipsisView.render().el]);
+                } else {
+                    return mapFiltered(_.rest(coll)).concat([navPageView.render().el]);
+                }
+            }
+
         }
 
     });
+
+    ElipsisView = Backbone.View.extend({
+        tagName: 'li',
+
+        template: _.template('<span class="page inactive elipsis">...</span>'),
+
+        render: function () {
+            this.$el.html(this.template({}));
+            return this;
+        },
+
+    })
 
     NavPageView = Backbone.View.extend({
 
@@ -198,9 +255,9 @@ $(function() {
 
         render: function () {
             if(this.model.isSelected()) {
-                this.$el.html(this.selected_template({no: Pages.indexOf(this.model) + 1}));
+                this.$el.html(this.selected_template({no: this.collection.indexOf(this.model) + 1}));
             } else {
-                this.$el.html(this.unselected_template({no: Pages.indexOf(this.model) + 1}));
+                this.$el.html(this.unselected_template({no: this.collection.indexOf(this.model) + 1}));
             }
             return this;
         },
@@ -226,6 +283,7 @@ $(function() {
             this.$el.append(pageNumberView.render().el);
             this.$el.append(nextView.render().el);
             this.$el.prepend(prevView.render().el);
+
             return this;
         }
     });
@@ -243,6 +301,7 @@ $(function() {
 
             this.$el.append(paginationView.render().el);
             this.$el.prepend(pageView.render().el);
+
             return this;
         }
     });
