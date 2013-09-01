@@ -94,7 +94,7 @@ $(function() {
             return (index <= 7) ||
                (index >= lastTwo) ||
                (distanceSelected <= 2);
-        } else if (selected >= this.length - 5) {
+        } else if (selected >= this.length - 6) {
             return (index >= this.length - 8) ||
                (index < 2) ||
                (distanceSelected <= 2);
@@ -198,41 +198,35 @@ $(function() {
         },
 
         renderFiltered: function () {
-            var filtered = _.map(this.collection.filtered(), this.buildView, this);
+            var filtered = this.mapFiltered(this.collection.filtered(), this.collection);
             this.$el.html(filtered);
         },
 
-        buildView: function(page) {
-            var view = new NavPageView({model: page, collection: this.collection});
-            return view.render().el;
-        },
-
-        mapFiltered: function (coll) {
+        mapFiltered: function (coll, pages) {
             var pair = _.first(coll, 2),
                 first = pair[0],
                 next = pair[1],
                 navPageView,
                 elipsisView;
+
             if(_.isEmpty(coll)) {
                 return [];
             } else {
-                navPageView = new NavPageView({model: page, collection: this.collection});
-                if(next !== undefined && (next - first !== 1)) {
+                navPageView = new NavPageView({model: first, collection: pages});
+                if(next !== undefined && (pages.indexOf(next) - pages.indexOf(first) !== 1)) {
                     elipsisView = new ElipsisView({});
-                    return mapFiltered(_.rest(coll)).concat([navPageView.render().el, elipsisView.render().el]);
+                    return [navPageView.render().el, elipsisView.render().el].concat(this.mapFiltered(_.rest(coll), pages));
                 } else {
-                    return mapFiltered(_.rest(coll)).concat([navPageView.render().el]);
+                    return [navPageView.render().el].concat(this.mapFiltered(_.rest(coll), pages));
                 }
             }
-
         }
-
     });
 
     ElipsisView = Backbone.View.extend({
         tagName: 'li',
 
-        template: _.template('<span class="page inactive elipsis">...</span>'),
+        template: _.template('<span class="page inactive elipsis el">...</span>'),
 
         render: function () {
             this.$el.html(this.template({}));
