@@ -12,6 +12,7 @@ $(function() {
         Filter;
 
     Page = Backbone.Model.extend({
+
         defaults: {
             headline: '',
             selected: false
@@ -31,6 +32,7 @@ $(function() {
     });
 
     PagesList = Backbone.Collection.extend({
+
         model: Page,
 
         selectedPage: function() {
@@ -82,7 +84,6 @@ $(function() {
         filtered: function() {
             return this.filter(Filter, this);
         }
-
     });
 
     Filter = function(page) {
@@ -90,14 +91,15 @@ $(function() {
             selected = this.selectedIndex(),
             distanceSelected = Math.abs(selected - index),
             lastTwo = this.length - 2;
+
         if(selected <= 5){
             return (index <= 7) ||
-               (index >= lastTwo) ||
-               (distanceSelected <= 2);
+                   (index >= lastTwo) ||
+                   (distanceSelected <= 2);
         } else if (selected >= this.length - 6) {
             return (index >= this.length - 8) ||
-               (index < 2) ||
-               (distanceSelected <= 2);
+                   (index < 2) ||
+                   (distanceSelected <= 2);
         } else {
             return (index < 2) ||
                    (index >= lastTwo) ||
@@ -129,6 +131,7 @@ $(function() {
     });
 
     PrevView = RemoteView.extend({
+
         className: 'remote prev',
 
         events: {
@@ -143,10 +146,10 @@ $(function() {
             this.renderControl("≺ Previous", this.collection.firstSelected());
             return this;
         }
-
     });
 
     NextView = RemoteView.extend({
+
         className: 'remote next',
 
         events: {
@@ -164,6 +167,7 @@ $(function() {
     });
 
     PageView = Backbone.View.extend({
+
         template: _.template('<p><%= headline %></p>'),
 
         id: 'page',
@@ -176,7 +180,6 @@ $(function() {
             this.$el.html(this.template(this.collection.selectedPage().toJSON()));
             return this;
         },
-
     });
 
     PageNumberView = Backbone.View.extend({
@@ -230,8 +233,7 @@ $(function() {
             this.$el.html(this.template({}));
             return this;
         },
-
-    })
+    });
 
     NavPageView = Backbone.View.extend({
 
@@ -261,10 +263,10 @@ $(function() {
         select: function () {
             this.collection.select(this.model);
         }
-
     });
 
     PaginationView = Backbone.View.extend({
+
         render: function() {
             var pageNumberView, prevView, nextView;
 
