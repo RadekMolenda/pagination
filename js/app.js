@@ -1,6 +1,6 @@
 $(function() {
     var Page,
-        Pages,
+        pages,
         PageView,
         PageNumberView,
         PaginationView,
@@ -104,8 +104,6 @@ $(function() {
                    (distanceSelected <= 2);
         }
     };
-
-    var Pages = new PagesList(window.feed_data);
 
     RemoteView = Backbone.View.extend({
 
@@ -300,5 +298,7 @@ $(function() {
         }
     });
 
-    window.appView = new AppView({collection: Pages, el: $('#app')});
+    //Initialize the app
+    pages = new PagesList(window.feed_data);
+    window.appView = new AppView({collection: pages, el: $('#app')});
 });
